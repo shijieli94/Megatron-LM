@@ -12,8 +12,8 @@ from megatron.core import tensor_parallel
 from megatron.core.enums import ModelType
 from megatron.core.models.gpt import GPTModel
 from megatron.core.models.gpt.gpt_layer_specs import (
-    gpt_layer_with_transformer_engine_spec, 
-    gpt_layer_with_transformer_engine_spec_moe
+    gpt_layer_with_transformer_engine_spec,
+    gpt_layer_with_transformer_engine_spec_moe,
 )
 from megatron.core.transformer.spec_utils import import_module
 from megatron.data.gpt_dataset import build_train_valid_test_datasets

@@ -4,10 +4,12 @@
 
 import os
 import sys
+
 import torch
 
 from megatron import dist_signal_handler
 from megatron.tokenizer import build_tokenizer
+
 from .microbatches import build_num_microbatches_calculator
 from .timers import Timers
 
@@ -19,6 +21,7 @@ _GLOBAL_TENSORBOARD_WRITER = None
 _GLOBAL_ADLR_AUTORESUME = None
 _GLOBAL_TIMERS = None
 _GLOBAL_SIGNAL_HANDLER = None
+
 
 def get_args():
     """Return arguments."""
@@ -40,8 +43,7 @@ def get_current_global_batch_size():
 
 
 def update_num_microbatches(consumed_samples, consistency_check=True):
-    _GLOBAL_NUM_MICROBATCHES_CALCULATOR.update(consumed_samples,
-                                               consistency_check)
+    _GLOBAL_NUM_MICROBATCHES_CALCULATOR.update(consumed_samples, consistency_check)
 
 
 def get_tokenizer():
@@ -79,7 +81,6 @@ def _set_signal_handler():
     _GLOBAL_SIGNAL_HANDLER = dist_signal_handler.DistributedSignalHandler().__enter__()
 
 
-
 def set_global_variables(args, build_tokenizer=True):
     """Set args, tokenizer, tensorboard-writer, adlr-autoresume, and timers."""
 
@@ -97,7 +98,7 @@ def set_global_variables(args, build_tokenizer=True):
 
     if args.exit_signal_handler:
         _set_signal_handler()
-    
+
 
 def set_args(args):
     global _GLOBAL_ARGS
@@ -112,11 +113,11 @@ def set_retro_args(retro_args):
 def _build_num_microbatches_calculator(args):
 
     global _GLOBAL_NUM_MICROBATCHES_CALCULATOR
-    _ensure_var_is_not_initialized(_GLOBAL_NUM_MICROBATCHES_CALCULATOR,
-                                   'num microbatches calculator')
+    _ensure_var_is_not_initialized(
+        _GLOBAL_NUM_MICROBATCHES_CALCULATOR, 'num microbatches calculator'
+    )
 
-    _GLOBAL_NUM_MICROBATCHES_CALCULATOR = build_num_microbatches_calculator(
-        args)
+    _GLOBAL_NUM_MICROBATCHES_CALCULATOR = build_num_microbatches_calculator(args)
 
 
 def _build_tokenizer(args):
@@ -136,21 +137,27 @@ def rebuild_tokenizer(args):
 def _set_tensorboard_writer(args):
     """Set tensorboard writer."""
     global _GLOBAL_TENSORBOARD_WRITER
-    _ensure_var_is_not_initialized(_GLOBAL_TENSORBOARD_WRITER,
-                                   'tensorboard writer')
+    _ensure_var_is_not_initialized(_GLOBAL_TENSORBOARD_WRITER, 'tensorboard writer')
 
-    if hasattr(args, 'tensorboard_dir') and \
-       args.tensorboard_dir and args.rank == (args.world_size - 1):
+    if (
+        hasattr(args, 'tensorboard_dir')
+        and args.tensorboard_dir
+        and args.rank == (args.world_size - 1)
+    ):
         try:
             from torch.utils.tensorboard import SummaryWriter
+
             print('> setting tensorboard ...')
             _GLOBAL_TENSORBOARD_WRITER = SummaryWriter(
-                log_dir=args.tensorboard_dir,
-                max_queue=args.tensorboard_queue_size)
+                log_dir=args.tensorboard_dir, max_queue=args.tensorboard_queue_size
+            )
         except ModuleNotFoundError:
-            print('WARNING: TensorBoard writing requested but is not '
-                  'available (are you using PyTorch 1.1.0 or later?), '
-                  'no TensorBoard logs will be written.', flush=True)
+            print(
+                'WARNING: TensorBoard writing requested but is not '
+                'available (are you using PyTorch 1.1.0 or later?), '
+                'no TensorBoard logs will be written.',
+                flush=True,
+            )
 
 
 def _set_adlr_autoresume(args):
@@ -186,6 +193,3 @@ def _ensure_var_is_initialized(var, name):
 def _ensure_var_is_not_initialized(var, name):
     """Make sure the input variable is not None."""
     assert var is None, '{} is already initialized.'.format(name)
-
-
-

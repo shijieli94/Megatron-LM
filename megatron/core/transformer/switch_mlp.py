@@ -63,7 +63,7 @@ class SwitchMLP(MegatronModule):
             self.local_experts.append(expert)
 
     def gather_indices(self, local_indices):
-        """ Gather tensors and concatenate along the first dimension."""
+        """Gather tensors and concatenate along the first dimension."""
         group = get_tensor_and_expert_parallel_group()
         world_size = torch.distributed.get_world_size(group=group)
         # Bypass the function if we are using only 1 GPU.
@@ -129,8 +129,10 @@ class SwitchMLP(MegatronModule):
                 output_total
             )
             if self.add_bias:
-                output_bias_total = tensor_parallel.reduce_scatter_to_sequence_parallel_region_from_moe(
-                    output_bias_total
+                output_bias_total = (
+                    tensor_parallel.reduce_scatter_to_sequence_parallel_region_from_moe(
+                        output_bias_total
+                    )
                 )
                 # bias is duplicated across tensor parallelism ranks;
                 # reduce scatter reduces bias across tensor parallel_ranks

@@ -1,8 +1,9 @@
 # Copyright (c) 2023, NVIDIA CORPORATION.  All rights reserved.
 
-import numpy as np
 import os
 import shutil
+
+import numpy as np
 import torch
 from tqdm import tqdm
 
@@ -23,7 +24,6 @@ from .utils import (
     get_training_data_merged_path,
     get_training_data_root_dir,
 )
-
 
 ##################################################
 # Train index.
@@ -62,12 +62,11 @@ def merge_embedding_blocks():
     # Merge blocks.
     with open(bin_path, "wb") as fo:
         byte_offset = 0
-        for block_idx, block_path in \
-            enumerate(tqdm(block_paths, "merge train embeddings")):
+        for block_idx, block_path in enumerate(tqdm(block_paths, "merge train embeddings")):
             with h5py.File(block_path) as fi:
 
                 nload = get_block_nload(block_path, load_fraction)
-                block = np.array(fi["data"][:nload], copy = False)
+                block = np.array(fi["data"][:nload], copy=False)
 
                 fo.write(block.tobytes())
 
@@ -93,13 +92,13 @@ def embed_db():
     text_dataset = GPTToTextDataset(gpt_dataset)
 
     # Embed dataset.
-    embedder = DiskDataParallelBertEmbedder(args.retro_bert_batch_size,
-                                            args.retro_bert_max_chunk_length,
-                                            args.retro_block_size,
-                                            args.bert_embedder_type)
-    embedder.embed_text_dataset("index",
-                                get_training_data_block_dir(),
-                                text_dataset)
+    embedder = DiskDataParallelBertEmbedder(
+        args.retro_bert_batch_size,
+        args.retro_bert_max_chunk_length,
+        args.retro_block_size,
+        args.bert_embedder_type,
+    )
+    embedder.embed_text_dataset("index", get_training_data_block_dir(), text_dataset)
 
     # Merge embeddings.
     merge_embedding_blocks()

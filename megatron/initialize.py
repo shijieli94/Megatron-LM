@@ -2,24 +2,21 @@
 
 """Megatron initialization."""
 
-import random
 import os
+import random
 import time
+from datetime import timedelta
 
 import numpy as np
 import torch
-from datetime import timedelta
 
-from megatron import fused_kernels
-from megatron import get_adlr_autoresume
-from megatron import get_args
-from megatron import get_tensorboard_writer
-from megatron.core import mpu, tensor_parallel
+from megatron import fused_kernels, get_adlr_autoresume, get_args, get_tensorboard_writer
 from megatron.arguments import parse_args, validate_args
 from megatron.checkpointing import load_args_from_checkpoint
+from megatron.core import mpu, tensor_parallel
 from megatron.global_vars import set_global_variables
-from megatron.model.transformer import bias_dropout_add_fused_train
 from megatron.model.fused_bias_gelu import bias_gelu
+from megatron.model.transformer import bias_dropout_add_fused_train
 
 
 def initialize_megatron(
@@ -121,17 +118,10 @@ def _compile_dependencies():
     # Constraints on sequence length and attn_batch_size to enable warp based
     # optimization and upper triangular optimization (for causal mask)
     custom_kernel_constraint = (
-        seq_len > 16
-        and seq_len <= 16384
-        and seq_len % 4 == 0
-        and attn_batch_size % 4 == 0
+        seq_len > 16 and seq_len <= 16384 and seq_len % 4 == 0 and attn_batch_size % 4 == 0
     )
     # Print a warning.
-    if not (
-        (args.fp16 or args.bf16)
-        and custom_kernel_constraint
-        and args.masked_softmax_fusion
-    ):
+    if not ((args.fp16 or args.bf16) and custom_kernel_constraint and args.masked_softmax_fusion):
         if args.rank == 0:
             print(
                 "WARNING: constraints for invoking optimized"
@@ -171,8 +161,7 @@ def _initialize_distributed():
 
         if args.rank == 0:
             print(
-                "torch distributed is already initialized, "
-                "skipping initialization ...",
+                "torch distributed is already initialized, " "skipping initialization ...",
                 flush=True,
             )
         args.rank = torch.distributed.get_rank()
@@ -331,15 +320,11 @@ def _warmup_jit_function():
         dtype=dtype,
         device="cuda",
     )
-    bias = torch.rand((args.hidden_size), dtype=dtype, device="cuda").expand_as(
-        residual
-    )
+    bias = torch.rand((args.hidden_size), dtype=dtype, device="cuda").expand_as(residual)
     dropout_rate = 0.1
     # Warmup JIT fusions with the input grad_enable state of both forward
     # prop and recomputation
-    for input_grad, bias_grad, residual_grad in zip(
-        [False, True], [True, True], [True, True]
-    ):
+    for input_grad, bias_grad, residual_grad in zip([False, True], [True, True], [True, True]):
         input.requires_grad = input_grad
         bias.requires_grad = bias_grad
         residual.requires_grad = residual_grad

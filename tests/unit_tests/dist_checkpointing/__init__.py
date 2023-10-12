@@ -18,9 +18,9 @@ def empty_dir(path: Path):
             p.unlink()
 
 
-
 class TempNamedDir(TemporaryDirectory):
-    """ TemporaryDirectory with a fully named directory. Empties the dir if not empty. """
+    """TemporaryDirectory with a fully named directory. Empties the dir if not empty."""
+
     def __init__(self, name: Union[str, Path], sync=True) -> None:
         self.name = str(name)
         if Utils.rank == 0:
@@ -28,14 +28,15 @@ class TempNamedDir(TemporaryDirectory):
             empty_dir(Path(name))
 
         self._finalizer = weakref.finalize(
-            self, self._cleanup, self.name,
-            warn_message="Implicitly cleaning up {!r}".format(self))
+            self, self._cleanup, self.name, warn_message="Implicitly cleaning up {!r}".format(self)
+        )
 
         self.sync = sync
 
     def cleanup(self) -> None:
         if self.sync:
             import torch
+
             torch.distributed.barrier()
 
         if Utils.rank == 0:
@@ -43,4 +44,3 @@ class TempNamedDir(TemporaryDirectory):
 
     def __enter__(self):
         return Path(super().__enter__())
-

@@ -8,10 +8,11 @@ FaissBaseIndex. This allows 'add()' to scale out to very large datasets, since
 the vast majority of the computational effort is embarrassingly parallel.
 """
 
-import numpy as np
 import os
-import psutil
 import shutil
+
+import numpy as np
+import psutil
 import torch
 from tqdm import tqdm
 
@@ -19,13 +20,12 @@ from megatron import get_retro_args, print_rank_0
 from tools.bert_embedding import BertEmbedder
 from tools.bert_embedding.utils import get_missing_blocks_by_rank
 from tools.retro.external_libs import faiss, h5py
-from tools.retro.index.utils import get_added_codes_dir, get_added_code_paths
+from tools.retro.index.utils import get_added_code_paths, get_added_codes_dir
 
 from .faiss_base import FaissBaseIndex
 
 
 class FaissParallelAddIndex(FaissBaseIndex):
-
     def encode_block(self, index, embedder, text_dataset, block):
         '''Encode sub-dataset block, to be later added to index.
 
@@ -63,13 +63,14 @@ class FaissParallelAddIndex(FaissBaseIndex):
         index = self.get_empty_index()
 
         # Bert embedder.
-        embedder = BertEmbedder(args.retro_bert_batch_size,
-                                args.retro_bert_max_chunk_length,
-                                args.bert_embedder_type)
+        embedder = BertEmbedder(
+            args.retro_bert_batch_size, args.retro_bert_max_chunk_length, args.bert_embedder_type
+        )
 
         # Missing code blocks.
         def validate(f):
             assert len(f["data"].shape) == 2
+
         n_missing_blocks, missing_code_blocks = get_missing_blocks_by_rank(
             codes_dir,
             len(text_dataset),
@@ -83,11 +84,14 @@ class FaissParallelAddIndex(FaissBaseIndex):
             if block is not None:
 
                 # Progress.
-                print_rank_0("encode block %d / %d ... %s." % (
-                    block_index,
-                    len(missing_code_blocks),
-                    block["path"],
-                ))
+                print_rank_0(
+                    "encode block %d / %d ... %s."
+                    % (
+                        block_index,
+                        len(missing_code_blocks),
+                        block["path"],
+                    )
+                )
 
                 # Query block neighbors.
                 self.encode_block(index, embedder, text_dataset, block)
@@ -117,13 +121,16 @@ class FaissParallelAddIndex(FaissBaseIndex):
         code_paths = get_added_code_paths()
         pbar = tqdm(code_paths)
         for code_path in pbar:
-            pbar.set_description("add codes, mem %.3f gb, %.1f%%" % (
-                psutil.virtual_memory()[3] / 1024**3,
-                psutil.virtual_memory()[2],
-            ))
+            pbar.set_description(
+                "add codes, mem %.3f gb, %.1f%%"
+                % (
+                    psutil.virtual_memory()[3] / 1024**3,
+                    psutil.virtual_memory()[2],
+                )
+            )
             with h5py.File(code_path) as f:
 
-                nload = int(args.retro_index_add_load_fraction*f["data"].shape[0])
+                nload = int(args.retro_index_add_load_fraction * f["data"].shape[0])
                 offset = int(os.path.basename(code_path).split("-")[0])
                 xids = np.arange(offset, offset + nload)
                 codes = np.copy(f["data"][:nload])

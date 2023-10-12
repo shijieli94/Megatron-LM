@@ -1,11 +1,9 @@
+import argparse
+import json
 import os
 import sys
-import json
-import argparse
 
-sys.path.append(
-    os.path.abspath(os.path.join(os.path.dirname(__file__), os.path.pardir))
-)
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), os.path.pardir)))
 
 from megatron.data.indexed_dataset import (
     MMapIndexedDataset,
@@ -36,9 +34,7 @@ def get_args():
 
     args = parser.parse_args()
 
-    assert os.path.isdir(
-        args.input
-    ), f"ERROR: {args.input} is not a directory or does not exist"
+    assert os.path.isdir(args.input), f"ERROR: {args.input} is not a directory or does not exist"
 
     assert os.path.isdir(
         os.path.dirname(args.output_prefix)

@@ -66,7 +66,7 @@ def sharded_tensor_chunk_id(sharded_tensor: ShardedTensor):
 
 
 class TwoStageDataParallelLoadShardedStrategy(LoadShardedStrategy):
-    """ Loads one checkpoint replica from storage and broadcasts to other nodes.
+    """Loads one checkpoint replica from storage and broadcasts to other nodes.
 
     This strategy loads checkpoint from storage on minimal set of nodes
     and distributes the checkpoint to other nodes with torch.distributed.
@@ -176,7 +176,7 @@ class TwoStageDataParallelLoadShardedStrategy(LoadShardedStrategy):
 
     @timed()
     def deduplicate_chunks(self, ten_metas: List[_ShardedTensorMetadata]):
-        """ Group tensors by chunk and then pick the tensor with the lowest rank.
+        """Group tensors by chunk and then pick the tensor with the lowest rank.
 
         NOTE: with proper loading overlap, loading from randomized ranks
          (instead of the smallest one) could be beneficial here.

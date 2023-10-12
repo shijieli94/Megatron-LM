@@ -183,10 +183,10 @@ def model_parallel_cuda_manual_seed(seed):
 
 class CheckpointFunction(torch.autograd.Function):
     """This function is adapted from torch.utils.checkpoint with
-       two main changes:
-           1) torch.cuda.set_rng_state is replaced with `_set_cuda_rng_state`
-           2) the states in the model parallel tracker are also properly
-              tracked/set/reset.
+    two main changes:
+        1) torch.cuda.set_rng_state is replaced with `_set_cuda_rng_state`
+        2) the states in the model parallel tracker are also properly
+           tracked/set/reset.
     """
 
     @staticmethod

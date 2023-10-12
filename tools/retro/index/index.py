@@ -1,8 +1,9 @@
 # Copyright (c) 2023, NVIDIA CORPORATION.  All rights reserved.
 
 import abc
-import numpy as np
 import os
+
+import numpy as np
 import torch
 
 from megatron import get_retro_args
@@ -44,7 +45,8 @@ class Index(abc.ABC):
         args = get_retro_args()
         return os.path.join(
             get_index_dir(),
-            "added_%.3f_%.3f.faissindex" % (
+            "added_%.3f_%.3f.faissindex"
+            % (
                 args.retro_index_train_load_fraction,
                 args.retro_index_add_load_fraction,
             ),

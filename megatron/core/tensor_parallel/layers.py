@@ -222,17 +222,20 @@ class VocabParallelEmbedding(torch.nn.Module):
 
 class LinearWithFrozenWeight(torch.autograd.Function):
     """Linear operator that does not calculate gradient for weight.
-    This op and LinearWithGradAccumulationAndAsyncCommunication performs 
-    mathematically-identical forward and DGRAD. 
-    
+    This op and LinearWithGradAccumulationAndAsyncCommunication performs
+    mathematically-identical forward and DGRAD.
+
     Conceptually this op is the same as torch.nn.functional.linear with
-    weight.requires_grad==False, but in experiments they are not identical 
-    mathematically. """
+    weight.requires_grad==False, but in experiments they are not identical
+    mathematically."""
 
     @staticmethod
     @custom_fwd
     def forward(
-        ctx, input, weight, bias,
+        ctx,
+        input,
+        weight,
+        bias,
     ):
         ctx.save_for_backward(weight)
         output = torch.matmul(input, weight.t())
@@ -258,10 +261,10 @@ def linear_with_frozen_weight(
 ) -> torch.Tensor:
     """Linear layer execution with weight.requires_grad == False.
 
-    This function handles linear layers with weight frozen (untrainable). 
+    This function handles linear layers with weight frozen (untrainable).
     In the forward, it only saves weight and does not save input activations.
-    In the backward, it does not perform weight gradient calculation, or 
-    weight gradient allreduce. 
+    In the backward, it does not perform weight gradient calculation, or
+    weight gradient allreduce.
 
     Arguments:
 
@@ -271,10 +274,10 @@ def linear_with_frozen_weight(
 
     bias (torch.Tensor optional): bias like torch.nn.functional.linear
 
-    gradient_accumulation_fusion (bool required): dummy argument, used to 
+    gradient_accumulation_fusion (bool required): dummy argument, used to
     keep the API unified between all forward implementation functions.
 
-    async_grad_allreduce (bool required): dummy argument, used to 
+    async_grad_allreduce (bool required): dummy argument, used to
     keep the API unified between all forward implementation functions.
 
     sequence_parallel (bool required): Indicates that sequence

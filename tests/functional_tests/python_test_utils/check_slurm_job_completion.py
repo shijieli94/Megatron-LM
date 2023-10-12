@@ -3,9 +3,8 @@
        python3 check_slurm_job_completion.py <JOB_ID>
 """
 
-import sys
 import subprocess
-
+import sys
 
 cmd = f"sacct -j {sys.argv[1]}"
 result = subprocess.check_output(cmd, shell=True).decode().split()
@@ -16,4 +15,3 @@ exit_code = result[20]
 
 assert status == "COMPLETED", f"Job {sys.argv[1]} not completed."
 assert exit_code == "0:0", f"Job {sys.argv[1]} did not exit successfully."
-

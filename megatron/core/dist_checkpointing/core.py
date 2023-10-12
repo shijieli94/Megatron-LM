@@ -14,7 +14,7 @@ class CheckpointingException(Exception):
 
 @dataclass
 class CheckpointingConfig:
-    """ Documents backends used in the checkpoint. """
+    """Documents backends used in the checkpoint."""
 
     sharded_backend: str
     sharded_backend_version: int = 1

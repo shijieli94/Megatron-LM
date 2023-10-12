@@ -37,12 +37,14 @@ else:
 #                             Dependency Loading                              #
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% #
 
+
 def req_file(filename, folder="megatron/core"):
     with open(os.path.join(folder, filename), encoding='utf-8') as f:
         content = f.readlines()
     # you may also want to remove whitespace characters
     # Example: `\n` at the end of each line
     return [x.strip() for x in content]
+
 
 install_requires = req_file("requirements.txt")
 
@@ -101,9 +103,8 @@ setuptools.setup(
         'Natural Language :: English',
         'Operating System :: OS Independent',
     ],
-    packages=['megatron.core', 'megatron.core.pipeline_parallel', 'megatron.core.tensor_parallel'], 
+    packages=['megatron.core', 'megatron.core.pipeline_parallel', 'megatron.core.tensor_parallel'],
     install_requires=install_requires,
-
     # Add in any packaged data.
     include_package_data=True,
     # PyPI package information.

@@ -9,14 +9,12 @@ from .distrib_optimizer import DistributedOptimizer
 from .grad_scaler import ConstantGradScaler, DynamicGradScaler
 from .optimizer import Float16OptimizerWithFloat16Params, FP32Optimizer
 
-def get_param_groups(modules,
-                     no_weight_decay_cond,
-                     scale_lr_cond,
-                     lr_mult):
+
+def get_param_groups(modules, no_weight_decay_cond, scale_lr_cond, lr_mult):
     """creates param groups based on weight decay condition (regularized vs non regularized)
-       and learning rate scale condition (args.lr vs lr_mult * args.lr)
-       scale_lr_cond is used during finetuning where head of the network requires a scaled
-       version of the base learning rate. 
+    and learning rate scale condition (args.lr vs lr_mult * args.lr)
+    scale_lr_cond is used during finetuning where head of the network requires a scaled
+    version of the base learning rate.
     """
     wd_no_scale_lr = []
     wd_scale_lr = []
@@ -59,32 +57,27 @@ def get_param_groups(modules,
 
     return param_groups
 
-def get_megatron_optimizer(model,
-                           no_weight_decay_cond=None,
-                           scale_lr_cond=None,
-                           lr_mult=1.0):
+
+def get_megatron_optimizer(model, no_weight_decay_cond=None, scale_lr_cond=None, lr_mult=1.0):
     args = get_args()
 
     # Base optimizer.
-    param_groups = get_param_groups(model,
-                                    no_weight_decay_cond,
-                                    scale_lr_cond,
-                                    lr_mult)
+    param_groups = get_param_groups(model, no_weight_decay_cond, scale_lr_cond, lr_mult)
 
     if args.optimizer == 'adam':
-        optimizer = Adam(param_groups,
-                         lr=args.lr,
-                         weight_decay=args.weight_decay,
-                         betas=(args.adam_beta1, args.adam_beta2),
-                         eps=args.adam_eps)
+        optimizer = Adam(
+            param_groups,
+            lr=args.lr,
+            weight_decay=args.weight_decay,
+            betas=(args.adam_beta1, args.adam_beta2),
+            eps=args.adam_eps,
+        )
     elif args.optimizer == 'sgd':
-        optimizer = SGD(param_groups,
-                        lr=args.lr,
-                        weight_decay=args.weight_decay,
-                        momentum=args.sgd_momentum)
+        optimizer = SGD(
+            param_groups, lr=args.lr, weight_decay=args.weight_decay, momentum=args.sgd_momentum
+        )
     else:
-        raise Exception('{} optimizer is not supported.'.format(
-            args.optimizer))
+        raise Exception('{} optimizer is not supported.'.format(args.optimizer))
 
     # Determine whether the params have main-grad field.
     params_have_main_grad = True
@@ -116,26 +109,34 @@ def get_megatron_optimizer(model,
                     growth_factor=2.0,
                     backoff_factor=0.5,
                     growth_interval=args.loss_scale_window,
-                    hysteresis=args.hysteresis)
+                    hysteresis=args.hysteresis,
+                )
 
         # Megatron optimizer.
-        opt_ty = DistributedOptimizer \
-            if args.use_distributed_optimizer else \
-            Float16OptimizerWithFloat16Params
-        return opt_ty(optimizer,
-                      args.clip_grad,
-                      args.log_num_zeros_in_grad,
-                      args.check_for_nan_in_loss_and_grad,
-                      params_have_main_grad,
-                      args.fp16,
-                      args.bf16,
-                      args.params_dtype,
-                      grad_scaler,
-                      model)
+        opt_ty = (
+            DistributedOptimizer
+            if args.use_distributed_optimizer
+            else Float16OptimizerWithFloat16Params
+        )
+        return opt_ty(
+            optimizer,
+            args.clip_grad,
+            args.log_num_zeros_in_grad,
+            args.check_for_nan_in_loss_and_grad,
+            params_have_main_grad,
+            args.fp16,
+            args.bf16,
+            args.params_dtype,
+            grad_scaler,
+            model,
+        )
 
     # FP32.
-    return FP32Optimizer(optimizer, args.clip_grad,
-                         args.log_num_zeros_in_grad,
-                         args.check_for_nan_in_loss_and_grad,
-                         params_have_main_grad,
-                         model)
+    return FP32Optimizer(
+        optimizer,
+        args.clip_grad,
+        args.log_num_zeros_in_grad,
+        args.check_for_nan_in_loss_and_grad,
+        params_have_main_grad,
+        model,
+    )

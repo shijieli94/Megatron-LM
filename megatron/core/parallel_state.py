@@ -365,7 +365,9 @@ def initialize_model_parallel(
     assert (
         _TENSOR_AND_DATA_PARALLEL_GROUP is None
     ), 'Tensor + data parallel group is already initialized'
-    tensor_and_data_group_size_with_cp: int = tensor_model_parallel_size * data_parallel_size * context_parallel_size
+    tensor_and_data_group_size_with_cp: int = (
+        tensor_model_parallel_size * data_parallel_size * context_parallel_size
+    )
     num_tensor_and_data_groups_with_cp: int = world_size // tensor_and_data_group_size_with_cp
     for i in range(num_tensor_and_data_groups_with_cp):
         start_rank = i * tensor_and_data_group_size_with_cp
@@ -647,8 +649,10 @@ def is_pipeline_last_stage(ignore_virtual=False):
         virtual_pipeline_model_parallel_world_size = (
             get_virtual_pipeline_model_parallel_world_size()
         )
-        if virtual_pipeline_model_parallel_world_size is not None and get_virtual_pipeline_model_parallel_rank() != (
-            virtual_pipeline_model_parallel_world_size - 1
+        if (
+            virtual_pipeline_model_parallel_world_size is not None
+            and get_virtual_pipeline_model_parallel_rank()
+            != (virtual_pipeline_model_parallel_world_size - 1)
         ):
             return False
     return get_pipeline_model_parallel_rank() == (get_pipeline_model_parallel_world_size() - 1)

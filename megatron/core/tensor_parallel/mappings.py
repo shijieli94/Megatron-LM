@@ -294,7 +294,9 @@ class _GatherFromSequenceParallelRegionToMOE(torch.autograd.Function):
 
     @staticmethod
     def forward(ctx, input_):
-        return _gather_along_first_dim_moe(input_,)
+        return _gather_along_first_dim_moe(
+            input_,
+        )
 
     @staticmethod
     def backward(ctx, grad_output):
@@ -310,7 +312,9 @@ class _ReduceScatterToSequenceParallelRegionFromMOE(torch.autograd.Function):
 
     @staticmethod
     def forward(ctx, input_):
-        return _reduce_scatter_along_first_dim_moe(input_,)
+        return _reduce_scatter_along_first_dim_moe(
+            input_,
+        )
 
     @staticmethod
     def backward(ctx, grad_output):

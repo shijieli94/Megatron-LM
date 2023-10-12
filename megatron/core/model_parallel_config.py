@@ -79,7 +79,7 @@ class ModelParallelConfig:
     enable_autocast (bool): If true runs the forward step function inside torch.autocast context. Default is False.
 
     autocast_dtype (torch.dtype): dtype to pass to torch.amp.autocast when enabled. Default is pipeline_dtype.
-    
+
     variable_seq_lengths (bool, default=False): Support for variable sequence lengths across microbatches. Setting this
         communicates the size of tensors during pipeline parallelism communication, because of this extra overhead it
         should only be set if the sequence length varies by microbatch within a global batch.
@@ -170,8 +170,8 @@ class ModelParallelConfig:
     barrier_with_L1_time: bool = True
 
     def __post_init__(self):
-        """ Python dataclass method that is used to modify attributes after initialization.
-            See https://docs.python.org/3/library/dataclasses.html#post-init-processing for more details.
+        """Python dataclass method that is used to modify attributes after initialization.
+        See https://docs.python.org/3/library/dataclasses.html#post-init-processing for more details.
         """
         if self.sequence_parallel:
             if self.tensor_model_parallel_size <= 1:

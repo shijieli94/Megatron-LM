@@ -1,26 +1,29 @@
 # Copyright (c) 2023, NVIDIA CORPORATION. All rights reserved.
 
 import os
+
 import pytest
-
 import torch
-from megatron.core import dist_checkpointing
 
+from megatron.core import dist_checkpointing
+from megatron.core.models.gpt.gpt_layer_specs import gpt_layer_with_transformer_engine_spec
+from megatron.core.tensor_parallel.random import model_parallel_cuda_manual_seed
+from megatron.core.transformer.transformer_block import TransformerBlock
 from megatron.core.transformer.transformer_config import TransformerConfig
 from megatron.core.transformer.transformer_layer import TransformerLayer
-from megatron.core.transformer.transformer_block import TransformerBlock
 from tests.unit_tests.test_utilities import Utils
-from megatron.core.tensor_parallel.random import model_parallel_cuda_manual_seed
-from megatron.core.models.gpt.gpt_layer_specs import gpt_layer_with_transformer_engine_spec
+
 
 class TestParallelTransformerBlock:
-
     def setup_method(self, method):
-        Utils.initialize_model_parallel(1,1)
+        Utils.initialize_model_parallel(1, 1)
         model_parallel_cuda_manual_seed(123)
-        self.transformer_config = TransformerConfig(num_layers=2, hidden_size=12, num_attention_heads=4, use_cpu_initialization=True)
-        self.parallel_transformer_block = TransformerBlock(self.transformer_config,
-                                                           gpt_layer_with_transformer_engine_spec)
+        self.transformer_config = TransformerConfig(
+            num_layers=2, hidden_size=12, num_attention_heads=4, use_cpu_initialization=True
+        )
+        self.parallel_transformer_block = TransformerBlock(
+            self.transformer_config, gpt_layer_with_transformer_engine_spec
+        )
 
     def teardown_method(self, method):
         Utils.destroy_model_parallel()
@@ -51,7 +54,9 @@ class TestParallelTransformerBlock:
 
         attention_mask = torch.ones((1, 1, sequence_length, sequence_length), dtype=bool).cuda()
 
-        hidden_states = parallel_transformer_block(hidden_states=hidden_states, attention_mask=attention_mask)
+        hidden_states = parallel_transformer_block(
+            hidden_states=hidden_states, attention_mask=attention_mask
+        )
         assert hidden_states.shape[0] == sequence_length
         assert hidden_states.shape[1] == micro_batch_size
         assert hidden_states.shape[2] == config.hidden_size
@@ -62,8 +67,7 @@ class TestParallelTransformerBlock:
         config.recompute_granularity = 'full'
         config.recompute_method = 'block'
         config.recompute_num_layers = config.num_layers
-        full_transformer_block = TransformerBlock(config,
-                                                  gpt_layer_with_transformer_engine_spec)
+        full_transformer_block = TransformerBlock(config, gpt_layer_with_transformer_engine_spec)
         assert full_transformer_block.config.recompute_granularity == 'full'
         assert full_transformer_block.config.recompute_method == 'block'
 
@@ -77,7 +81,9 @@ class TestParallelTransformerBlock:
 
         attention_mask = torch.ones((1, 1, sequence_length, sequence_length), dtype=bool).cuda()
 
-        hidden_states = full_transformer_block(hidden_states=hidden_states, attention_mask=attention_mask)
+        hidden_states = full_transformer_block(
+            hidden_states=hidden_states, attention_mask=attention_mask
+        )
         assert hidden_states.shape[0] == sequence_length
         assert hidden_states.shape[1] == micro_batch_size
         assert hidden_states.shape[2] == config.hidden_size
@@ -86,8 +92,9 @@ class TestParallelTransformerBlock:
         transformer_config = self.transformer_config
         config = transformer_config
         config.recompute_granularity = 'selective'
-        selective_transformer_block = TransformerBlock(config,
-                                                       gpt_layer_with_transformer_engine_spec)
+        selective_transformer_block = TransformerBlock(
+            config, gpt_layer_with_transformer_engine_spec
+        )
         assert selective_transformer_block.config.recompute_granularity == 'selective'
         assert selective_transformer_block.checkpoint_core_attention
 
@@ -101,7 +108,9 @@ class TestParallelTransformerBlock:
 
         attention_mask = torch.ones((1, 1, sequence_length, sequence_length), dtype=bool).cuda()
 
-        hidden_states = selective_transformer_block(hidden_states=hidden_states, attention_mask=attention_mask)
+        hidden_states = selective_transformer_block(
+            hidden_states=hidden_states, attention_mask=attention_mask
+        )
         assert hidden_states.shape[0] == sequence_length
         assert hidden_states.shape[1] == micro_batch_size
         assert hidden_states.shape[2] == config.hidden_size

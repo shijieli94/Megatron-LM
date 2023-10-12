@@ -11,7 +11,7 @@ import torch
 def extract_matching_values(
     x: Union[dict, list], predicate: Callable
 ) -> Tuple[Union[dict, list], Union[dict, list]]:
-    """ Return matching and nonmatching values. Keeps hierarchy. """
+    """Return matching and nonmatching values. Keeps hierarchy."""
     if isinstance(x, dict):
         matching_vals = {}
         nonmatching_vals = {}

@@ -178,50 +178,66 @@ def _p2p_ops(
     if get_pipeline_model_parallel_rank() % 2 == 0:
         if tensor_send_next is not None:
             send_next_req = torch.distributed.isend(
-                tensor=tensor_send_next, dst=get_pipeline_model_parallel_next_rank(), group=group,
+                tensor=tensor_send_next,
+                dst=get_pipeline_model_parallel_next_rank(),
+                group=group,
             )
             reqs.append(send_next_req)
 
         if tensor_recv_prev is not None:
             recv_prev_req = torch.distributed.irecv(
-                tensor=tensor_recv_prev, src=get_pipeline_model_parallel_prev_rank(), group=group,
+                tensor=tensor_recv_prev,
+                src=get_pipeline_model_parallel_prev_rank(),
+                group=group,
             )
             reqs.append(recv_prev_req)
 
         if tensor_send_prev is not None:
             send_prev_req = torch.distributed.isend(
-                tensor=tensor_send_prev, dst=get_pipeline_model_parallel_prev_rank(), group=group,
+                tensor=tensor_send_prev,
+                dst=get_pipeline_model_parallel_prev_rank(),
+                group=group,
             )
             reqs.append(send_prev_req)
 
         if tensor_recv_next is not None:
             recv_next_req = torch.distributed.irecv(
-                tensor=tensor_recv_next, src=get_pipeline_model_parallel_next_rank(), group=group,
+                tensor=tensor_recv_next,
+                src=get_pipeline_model_parallel_next_rank(),
+                group=group,
             )
             reqs.append(recv_next_req)
 
     else:
         if tensor_recv_prev is not None:
             recv_prev_req = torch.distributed.irecv(
-                tensor=tensor_recv_prev, src=get_pipeline_model_parallel_prev_rank(), group=group,
+                tensor=tensor_recv_prev,
+                src=get_pipeline_model_parallel_prev_rank(),
+                group=group,
             )
             reqs.append(recv_prev_req)
 
         if tensor_send_next is not None:
             send_next_req = torch.distributed.isend(
-                tensor=tensor_send_next, dst=get_pipeline_model_parallel_next_rank(), group=group,
+                tensor=tensor_send_next,
+                dst=get_pipeline_model_parallel_next_rank(),
+                group=group,
             )
             reqs.append(send_next_req)
 
         if tensor_recv_next is not None:
             recv_next_req = torch.distributed.irecv(
-                tensor=tensor_recv_next, src=get_pipeline_model_parallel_next_rank(), group=group,
+                tensor=tensor_recv_next,
+                src=get_pipeline_model_parallel_next_rank(),
+                group=group,
             )
             reqs.append(recv_next_req)
 
         if tensor_send_prev is not None:
             send_prev_req = torch.distributed.isend(
-                tensor=tensor_send_prev, dst=get_pipeline_model_parallel_prev_rank(), group=group,
+                tensor=tensor_send_prev,
+                dst=get_pipeline_model_parallel_prev_rank(),
+                group=group,
             )
             reqs.append(send_prev_req)
     return reqs
@@ -348,7 +364,7 @@ def _communicate(
 
 
 def recv_forward(tensor_shape: Shape, config: ModelParallelConfig) -> torch.Tensor:
-    """ Receive tensor from previous rank in pipeline (forward receive).
+    """Receive tensor from previous rank in pipeline (forward receive).
 
 
     See _communicate for argument details.

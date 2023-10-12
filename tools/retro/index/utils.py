@@ -3,10 +3,11 @@
 import concurrent
 import gc
 import glob
-import numpy as np
 import os
-import psutil
 import time
+
+import numpy as np
+import psutil
 import torch
 from tqdm import tqdm
 
@@ -60,8 +61,9 @@ def get_training_data_block_paths():
 
 def get_training_data_merged_path():
     args = get_retro_args()
-    return os.path.join(get_training_data_root_dir(),
-                        "train_%.3f.bin" % args.retro_index_train_load_fraction)
+    return os.path.join(
+        get_training_data_root_dir(), "train_%.3f.bin" % args.retro_index_train_load_fraction
+    )
 
 
 def get_added_codes_dir():

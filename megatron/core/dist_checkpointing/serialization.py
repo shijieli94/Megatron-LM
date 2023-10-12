@@ -346,7 +346,7 @@ def _validate_sharding_for_key_flattened(tensors_by_shard):
 
 
 def validate_objects_sharding_integrity(sharded_objects: List[ShardedObject]):
-    """ Ensure uniqueness of saved objects. """
+    """Ensure uniqueness of saved objects."""
     local_sh_objs = [sh_obj.without_data() for sh_obj in sharded_objects]
     all_sh_objs = [None] * torch.distributed.get_world_size()
     torch.distributed.all_gather_object(all_sh_objs, local_sh_objs)

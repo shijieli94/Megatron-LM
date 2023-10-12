@@ -89,7 +89,12 @@ def _kernel_make_viewless_tensor(inp, requires_grad):
     data, without linking the viewed tensor, referenced via the '._base'
     field.
     '''
-    out = torch.empty((1,), dtype=inp.dtype, device=inp.device, requires_grad=requires_grad,)
+    out = torch.empty(
+        (1,),
+        dtype=inp.dtype,
+        device=inp.device,
+        requires_grad=requires_grad,
+    )
     out.data = inp.data
     return out
 
@@ -184,7 +189,7 @@ def scaled_init_method_normal(sigma, num_layers):
 
 
 def make_tp_sharded_tensor_for_checkpoint(tensor, key, tp_axis=0, replica_id=None, **kwargs):
-    """ Helper for instantiating a ShardedTensor where the `tp_axis` dimension is sharded across TP group. """
+    """Helper for instantiating a ShardedTensor where the `tp_axis` dimension is sharded across TP group."""
 
     return ShardedTensor.from_rank_offsets(
         key,
@@ -200,7 +205,7 @@ def make_tp_sharded_tensor_for_checkpoint(tensor, key, tp_axis=0, replica_id=Non
 
 
 def make_sharded_tensor_for_checkpoint(tensor, key, **kwargs):
-    """ Helper for instantiating a non-sharded ShardedTensor (replicated across TP and DP group). """
+    """Helper for instantiating a non-sharded ShardedTensor (replicated across TP and DP group)."""
 
     return ShardedTensor.from_rank_offsets(
         key,

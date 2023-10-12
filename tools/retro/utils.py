@@ -1,8 +1,9 @@
 # Copyright (c) 2023, NVIDIA CORPORATION.  All rights reserved.
 
 import os
-import torch
 import types
+
+import torch
 
 from megatron import get_retro_args
 from megatron.tokenizer.tokenizer import (
@@ -47,8 +48,8 @@ def get_bert_tokenizer():
     '''Bert (Wordpiece) tokenizer.'''
     args = get_retro_args()
     lower_case = {
-        "BertWordPieceLowerCase" : True,
-        "BertWordPieceCase" : False,
+        "BertWordPieceLowerCase": True,
+        "BertWordPieceCase": False,
     }[args.retro_bert_tokenizer_type]
     return _BertWordPieceTokenizer(
         vocab_file=args.retro_bert_vocab_file,

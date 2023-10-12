@@ -65,7 +65,9 @@ class TransformerLayer(MegatronModule):
 
         ## [Module 2: SelfAttention]
         self.self_attention = build_module(
-            submodules.self_attention, config=self.config, layer_number=layer_number,
+            submodules.self_attention,
+            config=self.config,
+            layer_number=layer_number,
         )
 
         ## [Module 3: BiasDropoutFusion]
@@ -84,7 +86,9 @@ class TransformerLayer(MegatronModule):
 
         ## [Module 5: CrossAttention]
         self.cross_attention = build_module(
-            submodules.cross_attention, config=self.config, layer_number=layer_number,
+            submodules.cross_attention,
+            config=self.config,
+            layer_number=layer_number,
         )
 
         ## [Module 6: BiasDropoutFusion]

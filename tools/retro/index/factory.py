@@ -12,8 +12,8 @@ class IndexFactory:
     @classmethod
     def get_index_class(cls, index_type):
         return {
-            "faiss-base" : FaissBaseIndex,
-            "faiss-par-add" : FaissParallelAddIndex,
+            "faiss-base": FaissBaseIndex,
+            "faiss-par-add": FaissParallelAddIndex,
         }[index_type]
 
     @classmethod

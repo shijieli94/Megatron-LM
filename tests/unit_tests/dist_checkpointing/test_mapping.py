@@ -1,13 +1,13 @@
 # Copyright (c) 2023, NVIDIA CORPORATION. All rights reserved.
 
 import pytest
-
 import torch
 
 from megatron.core.dist_checkpointing import ShardedTensor
 from megatron.core.dist_checkpointing.mapping import is_main_replica
 from megatron.core.transformer.transformer_config import TransformerConfig
 from tests.unit_tests.test_utilities import Utils
+
 
 class TestShardedTensor:
 
@@ -18,14 +18,11 @@ class TestShardedTensor:
     #
     # def teardown_method(self, method):
     #     Utils.destroy_model_parallel()
-    
+
     def test_from_rank_offsets_constructor(self, dtype=torch.float, device='cuda'):
         data = torch.ones((1, 3, 7, 9), dtype=dtype, device=device)
         shape = data.shape
-        rank_offsets = [
-            (0, 0, 10),
-            (2, 3, 6)
-        ]
+        rank_offsets = [(0, 0, 10), (2, 3, 6)]
         sh_ten = ShardedTensor.from_rank_offsets('keyA', data, *rank_offsets)
 
         assert isinstance(sh_ten, ShardedTensor)

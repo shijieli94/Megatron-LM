@@ -3,24 +3,33 @@
 import json
 import os
 import sys
+import types
+
 import torch
 import transformers
 from tqdm import tqdm
-import types
 
 
 def add_arguments(parser):
     group = parser.add_argument_group(title='Llama-2 HF loader.')
 
-    group.add_argument('--true-vocab-size', type=int, default=None,
-                       help='original size of vocab, if specified will trim padding from embedding table.')
-    group.add_argument('--vocab-file', type=str, default=None,
-                       help='Path to the vocab file. If specified will use this to get vocab size and '
-                       'trim padding from the embedding table.')
-    group.add_argument('--tokenizer-model', required=True,
-                       help='Sentencepiece tokenizer model.')
-    group.add_argument('--megatron-path', type=str, default=None,
-                       help='Base directory of deepspeed repository')
+    group.add_argument(
+        '--true-vocab-size',
+        type=int,
+        default=None,
+        help='original size of vocab, if specified will trim padding from embedding table.',
+    )
+    group.add_argument(
+        '--vocab-file',
+        type=str,
+        default=None,
+        help='Path to the vocab file. If specified will use this to get vocab size and '
+        'trim padding from the embedding table.',
+    )
+    group.add_argument('--tokenizer-model', required=True, help='Sentencepiece tokenizer model.')
+    group.add_argument(
+        '--megatron-path', type=str, default=None, help='Base directory of deepspeed repository'
+    )
 
 
 def verify_transformers_version():
@@ -43,7 +52,7 @@ def load_args_from_checkpoint(args):
     args.num_layers = llama_args["num_hidden_layers"]
     args.global_batch_size = 1024
     args.norm_epsilon = llama_args["rms_norm_eps"]
-    args.iteration = 1 # '0', 'release' don't work
+    args.iteration = 1  # '0', 'release' don't work
     args.add_position_embedding = False
     args.use_rotary_position_embeddings = True
     args.swiglu = True
@@ -66,7 +75,8 @@ def load_args_from_checkpoint(args):
 def set_preprocess_state(args, model, hf_model):
     '''Set embedding params.'''
     model.language_model.embedding.word_embeddings.weight.data.copy_(
-        hf_model.model.embed_tokens.weight)
+        hf_model.model.embed_tokens.weight
+    )
 
 
 def set_postprocess_state(args, model, hf_model):
@@ -85,17 +95,21 @@ def set_attn_state(args, layer, hf_layer):
     # Reshape loaded weights.
     tp = args.tensor_model_parallel_size
     nh = args.num_attention_heads // tp
-    ng = (args.num_query_groups if args.group_query_attention \
-        else args.num_attention_heads) // tp
+    ng = (args.num_query_groups if args.group_query_attention else args.num_attention_heads) // tp
     dim = args.kv_channels
     assert nh % ng == 0
 
     # Copy weights (re-order dimensions for Megatron).
-    attn.query_key_value.weight.data.copy_(torch.cat([ 
-        hf_attn.q_proj.weight.reshape((ng, dim*nh//ng, -1)),
-        hf_attn.k_proj.weight.reshape((ng, dim, -1)),
-        hf_attn.v_proj.weight.reshape((ng, dim, -1)),
-    ], dim=1).reshape((-1, args.hidden_size)))
+    attn.query_key_value.weight.data.copy_(
+        torch.cat(
+            [
+                hf_attn.q_proj.weight.reshape((ng, dim * nh // ng, -1)),
+                hf_attn.k_proj.weight.reshape((ng, dim, -1)),
+                hf_attn.v_proj.weight.reshape((ng, dim, -1)),
+            ],
+            dim=1,
+        ).reshape((-1, args.hidden_size))
+    )
     attn.dense.weight.data.copy_(hf_attn.o_proj.weight)
 
 
@@ -105,10 +119,15 @@ def set_mlp_state(args, layer, hf_layer):
     mlp = layer.mlp
     hf_mlp = hf_layer.mlp
 
-    mlp.dense_h_to_4h.weight.data.copy_(torch.cat([
-        hf_mlp.gate_proj.weight,
-        hf_mlp.up_proj.weight,
-    ], dim=0))
+    mlp.dense_h_to_4h.weight.data.copy_(
+        torch.cat(
+            [
+                hf_mlp.gate_proj.weight,
+                hf_mlp.up_proj.weight,
+            ],
+            dim=0,
+        )
+    )
     mlp.dense_4h_to_h.weight.data.copy_(hf_mlp.down_proj.weight)
 
 
@@ -127,8 +146,9 @@ def set_layer_state(args, model, hf_model, layer_idx):
 def load_checkpoint_to_model(args):
     '''Set model params.'''
 
-    from pretrain_gpt import model_provider
     from transformers import LlamaForCausalLM
+
+    from pretrain_gpt import model_provider
 
     # Load Huggingface model.
     hf_model = LlamaForCausalLM.from_pretrained(args.load, device_map="cpu")
@@ -151,40 +171,44 @@ def _load_checkpoint(queue, args):
     verify_transformers_version()
 
     # Search in directory above this.
-    sys.path.append(os.path.abspath(
-        os.path.join(os.path.dirname(__file__),
-                     os.path.pardir,
-                     os.path.pardir)))
+    sys.path.append(
+        os.path.abspath(os.path.join(os.path.dirname(__file__), os.path.pardir, os.path.pardir))
+    )
     if args.megatron_path is not None:
         sys.path.insert(0, args.megatron_path)
 
     try:
+        from megatron import fused_kernels
         from megatron.arguments import parse_args, validate_args
-        from megatron.global_vars import set_args, set_global_variables
-        from megatron.model import module
         from megatron.core import mpu
         from megatron.core.enums import ModelType
-        from megatron import fused_kernels
+        from megatron.global_vars import set_args, set_global_variables
+        from megatron.model import module
     except ModuleNotFoundError:
-        print("Unable to import Megatron, please specify the path to Megatron using --megatron-path. Exiting.")
+        print(
+            "Unable to import Megatron, please specify the path to Megatron using --megatron-path. Exiting."
+        )
         queue.put("exit")
         exit(1)
 
     # We want all arguments to come from us.
-    sys.argv = ['script.py',
-                '--no-masked-softmax-fusion',
-                '--no-bias-gelu-fusion',
-                '--no-bias-dropout-fusion',
-                '--no-async-tensor-model-parallel-allreduce',
-                '--use-cpu-initialization',
-                '--micro-batch-size', '1',
-                '--no-load-optim',
-                '--no-load-rng',
-                '--no-save-optim',
-                '--no-save-rng',
-                '--no-initialization',
-                '--load', args.load_dir
-                ]
+    sys.argv = [
+        'script.py',
+        '--no-masked-softmax-fusion',
+        '--no-bias-gelu-fusion',
+        '--no-bias-dropout-fusion',
+        '--no-async-tensor-model-parallel-allreduce',
+        '--use-cpu-initialization',
+        '--micro-batch-size',
+        '1',
+        '--no-load-optim',
+        '--no-load-rng',
+        '--no-save-optim',
+        '--no-save-rng',
+        '--no-initialization',
+        '--load',
+        args.load_dir,
+    ]
 
     margs = parse_args()
     margs.tokenizer_model = args.tokenizer_model
@@ -260,7 +284,7 @@ def _load_checkpoint(queue, args):
     md.swiglu = margs.swiglu
     md.previous_tensor_parallel_size = margs.tensor_model_parallel_size
     md.previous_pipeline_parallel_size = margs.pipeline_model_parallel_size
-    md.true_vocab_size = None # skips padding in saver
+    md.true_vocab_size = None  # skips padding in saver
     md.make_vocab_size_divisible_by = None
     md.checkpoint_args = margs
     md.consumed_train_samples = 0
@@ -279,11 +303,11 @@ def _load_checkpoint(queue, args):
         queue.put(msg)
 
     # Send embeddings.
-    message = {
-        "word embeddings": model.language_model.embedding.word_embeddings.weight.data
-    }
+    message = {"word embeddings": model.language_model.embedding.word_embeddings.weight.data}
     if md.position_embedding_type == 'learned_absolute':
-        message["position embeddings"] = model.language_model.embedding.position_embeddings.weight.data
+        message[
+            "position embeddings"
+        ] = model.language_model.embedding.position_embeddings.weight.data
     else:
         assert not hasattr(model.language_model.embedding, 'position_embeddings')
 
@@ -335,8 +359,8 @@ def _load_checkpoint(queue, args):
             if md.swiglu:
                 for tp_rank in range(tp_size):
                     mlp_l0_bias[tp_rank] = torch.chunk(mlp_l0_bias[tp_rank], 2, dim=0)
-                message["mlp l0 bias W"] = torch.cat([b[0] for b in mlp_l0_bias],dim=0)
-                message["mlp l0 bias V"] = torch.cat([b[1] for b in mlp_l0_bias],dim=0)
+                message["mlp l0 bias W"] = torch.cat([b[0] for b in mlp_l0_bias], dim=0)
+                message["mlp l0 bias V"] = torch.cat([b[1] for b in mlp_l0_bias], dim=0)
             else:
                 message["mlp l0 bias"] = torch.cat(mlp_l0_bias, dim=0)
 
@@ -349,9 +373,7 @@ def _load_checkpoint(queue, args):
     queue_put("final norm", message)
 
     if md.output_layer:
-        message = {
-            "weight": model.language_model.output_layer.weight.data
-        }
+        message = {"weight": model.language_model.output_layer.weight.data}
         queue_put("output layer", message)
 
     queue.put("done")

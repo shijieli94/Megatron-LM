@@ -1,10 +1,11 @@
 # Copyright (c) 2023, NVIDIA CORPORATION.  All rights reserved.
 
-from collections import defaultdict
 import glob
 import json
-import numpy as np
 import os
+from collections import defaultdict
+
+import numpy as np
 from tqdm import tqdm
 
 from megatron import get_retro_args, print_rank_0
@@ -70,7 +71,7 @@ def get_individual_chunk_db(ds_id, ds_info):
     for db_path in db_paths:
         f = h5py.File(db_path, "r")
         n_chunks_current = f["chunks_valid"].shape[0]
-        db[start_idx:(start_idx+n_chunks_current), 1:] = f["chunks_valid"]
+        db[start_idx : (start_idx + n_chunks_current), 1:] = f["chunks_valid"]
         start_idx += n_chunks_current
         f.close()
 
@@ -92,8 +93,7 @@ def get_individual_doc_offsets(ds_id, ds_info):
             current_doc_offsets = np.copy(f["doc_offsets"])
             current_doc_offsets[:, 1] += start_offset
             current_ndocs = current_doc_offsets.shape[0]
-            doc_offsets[start_idx:(start_idx+current_ndocs), 1:] = \
-                current_doc_offsets
+            doc_offsets[start_idx : (start_idx + current_ndocs), 1:] = current_doc_offsets
             start_idx += current_ndocs
             start_offset = current_doc_offsets[-1, 1].item()
 
@@ -104,9 +104,9 @@ def get_merged_db_path_map():
     '''Paths to merged datasets.'''
     base_dir = get_base_db_workdir()
     return {
-        "sampled" : os.path.join(base_dir, "merged", "sampled.hdf5"),
-        "train" : os.path.join(base_dir, "merged", "train.hdf5"),
-        "valid" : os.path.join(base_dir, "merged", "valid.hdf5"),
+        "sampled": os.path.join(base_dir, "merged", "sampled.hdf5"),
+        "train": os.path.join(base_dir, "merged", "train.hdf5"),
+        "valid": os.path.join(base_dir, "merged", "valid.hdf5"),
     }
 
 
@@ -124,9 +124,8 @@ def get_merged_dataset(db_type, indexed_dataset_infos=None):
     chunks = f["chunks"]
 
     # DB dataset.
-    indexed_datasets = [ info["dataset"] for info in indexed_dataset_infos ]
-    dataset = DBDataset(db_path, indexed_datasets, chunks,
-                        args.retro_gpt_chunk_length)
+    indexed_datasets = [info["dataset"] for info in indexed_dataset_infos]
+    dataset = DBDataset(db_path, indexed_datasets, chunks, args.retro_gpt_chunk_length)
 
     return dataset
 

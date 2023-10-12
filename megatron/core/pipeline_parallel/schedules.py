@@ -111,7 +111,11 @@ def deallocate_output_tensor(out, deallocate_pipeline_outputs=False):
         return
     assert isinstance(out, torch.Tensor), "expected Tensor, found %s." % type(out).__name__
     assert out._base is None, "counter-productive to free a view of another tensor."
-    out.data = torch.empty((1,), device=out.device, dtype=out.dtype,)
+    out.data = torch.empty(
+        (1,),
+        device=out.device,
+        dtype=out.dtype,
+    )
 
 
 def custom_backward(output, grad_output):
@@ -132,7 +136,10 @@ def custom_backward(output, grad_output):
     # Handle scalar output
     if grad_output is None:
         assert output.numel() == 1, "implicit grad requires scalar output."
-        grad_output = torch.ones_like(output, memory_format=torch.preserve_format,)
+        grad_output = torch.ones_like(
+            output,
+            memory_format=torch.preserve_format,
+        )
 
     # Call c++ engine [ see torch/csrc/autograd/python_engine.cpp ]
     Variable._execution_engine.run_backward(

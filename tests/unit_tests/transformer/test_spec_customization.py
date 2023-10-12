@@ -41,7 +41,7 @@ class TestSpecCustomization:
             submodules=SelfAttentionSubmodules(
                 linear_qkv=TELayerNormColumnParallelLinear,
                 dot_product_attention=TEDotProductAttention,
-                linear_proj=TERowParallelLinear
+                linear_proj=TERowParallelLinear,
             ),
         )
 
@@ -89,7 +89,9 @@ class TestSpecCustomization:
 
         # Check SelfAttention
         self_attention = build_module(
-            self.attention_spec, config=self.config, spec=self.attention_spec,
+            self.attention_spec,
+            config=self.config,
+            spec=self.attention_spec,
         )
         assert isinstance(self_attention, SelfAttention)
         assert self_attention.layer_number == 1

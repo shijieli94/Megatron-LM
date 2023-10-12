@@ -7,16 +7,14 @@ from functools import partial
 import torch
 import torch.nn.functional as F
 
-from megatron import get_args
-from megatron import print_rank_0
-from megatron import get_timers
+from megatron import get_args, get_timers, print_rank_0
+from megatron.arguments import core_transformer_config_from_args
 from megatron.core import tensor_parallel
 from megatron.core.enums import ModelType
 from megatron.data.dataset_utils import build_train_valid_test_datasets
 from megatron.model import BertModel
 from megatron.training import pretrain
 from megatron.utils import average_losses_across_data_parallel_group
-from megatron.arguments import core_transformer_config_from_args
 
 
 def model_provider(pre_process=True, post_process=True):
@@ -33,7 +31,8 @@ def model_provider(pre_process=True, post_process=True):
         add_binary_head=args.bert_binary_head,
         parallel_output=True,
         pre_process=pre_process,
-        post_process=post_process)
+        post_process=post_process,
+    )
 
     return model
 
@@ -68,24 +67,20 @@ def loss_func(loss_mask, sentence_order, output_tensor):
 
     lm_loss_ = lm_loss_.float()
     loss_mask = loss_mask.float()
-    lm_loss = torch.sum(
-        lm_loss_.view(-1) * loss_mask.reshape(-1)) / loss_mask.sum()
+    lm_loss = torch.sum(lm_loss_.view(-1) * loss_mask.reshape(-1)) / loss_mask.sum()
 
     if sop_logits is not None:
-        sop_loss = F.cross_entropy(sop_logits.view(-1, 2).float(),
-                                   sentence_order.view(-1),
-                                   ignore_index=-1)
+        sop_loss = F.cross_entropy(
+            sop_logits.view(-1, 2).float(), sentence_order.view(-1), ignore_index=-1
+        )
         sop_loss = sop_loss.float()
         loss = lm_loss + sop_loss
-        averaged_losses = average_losses_across_data_parallel_group(
-            [lm_loss, sop_loss])
-        return loss, {'lm loss': averaged_losses[0],
-                      'sop loss': averaged_losses[1]}
+        averaged_losses = average_losses_across_data_parallel_group([lm_loss, sop_loss])
+        return loss, {'lm loss': averaged_losses[0], 'sop loss': averaged_losses[1]}
 
     else:
         loss = lm_loss
-        averaged_losses = average_losses_across_data_parallel_group(
-            [lm_loss])
+        averaged_losses = average_losses_across_data_parallel_group([lm_loss])
         return loss, {'lm loss': averaged_losses[0]}
 
 
@@ -96,16 +91,14 @@ def forward_step(data_iterator, model):
 
     # Get the batch.
     timers('batch-generator', log_level=2).start()
-    tokens, types, sentence_order, loss_mask, lm_labels, padding_mask = get_batch(
-        data_iterator)
+    tokens, types, sentence_order, loss_mask, lm_labels, padding_mask = get_batch(data_iterator)
     timers('batch-generator').stop()
 
     if not args.bert_binary_head:
         types = None
 
     # Forward pass through the model.
-    output_tensor = model(tokens, padding_mask, tokentype_ids=types,
-                          lm_labels=lm_labels)
+    output_tensor = model(tokens, padding_mask, tokentype_ids=types, lm_labels=lm_labels)
 
     return output_tensor, partial(loss_func, loss_mask, sentence_order)
 
@@ -114,8 +107,7 @@ def train_valid_test_datasets_provider(train_val_test_num_samples):
     """Build train, valid, and test datasets."""
     args = get_args()
 
-    print_rank_0('> building train, validation, and test datasets '
-                 'for BERT ...')
+    print_rank_0('> building train, validation, and test datasets ' 'for BERT ...')
     train_ds, valid_ds, test_ds = build_train_valid_test_datasets(
         data_prefix=args.data_path,
         splits_string=args.split,
@@ -123,7 +115,8 @@ def train_valid_test_datasets_provider(train_val_test_num_samples):
         max_seq_length=args.seq_length,
         seed=args.seed,
         skip_warmup=(not args.mmap_warmup),
-        binary_head=args.bert_binary_head)
+        binary_head=args.bert_binary_head,
+    )
     print_rank_0("> finished creating BERT datasets ...")
 
     return train_ds, valid_ds, test_ds
@@ -131,6 +124,10 @@ def train_valid_test_datasets_provider(train_val_test_num_samples):
 
 if __name__ == "__main__":
 
-    pretrain(train_valid_test_datasets_provider, model_provider,
-             ModelType.encoder_or_decoder,
-             forward_step, args_defaults={'tokenizer_type': 'BertWordPieceLowerCase'})
+    pretrain(
+        train_valid_test_datasets_provider,
+        model_provider,
+        ModelType.encoder_or_decoder,
+        forward_step,
+        args_defaults={'tokenizer_type': 'BertWordPieceLowerCase'},
+    )

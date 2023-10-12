@@ -206,7 +206,9 @@ class TransformerBlock(MegatronModule):
         #   already creates viewless tensors. That said, make_viewless_tensor()
         #   is called here to be future-proof and corner-case-proof.
         hidden_states = make_viewless_tensor(
-            inp=hidden_states, requires_grad=True, keep_graph=True,
+            inp=hidden_states,
+            requires_grad=True,
+            keep_graph=True,
         )
 
         if self.config.sequence_parallel:
